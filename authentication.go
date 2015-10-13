@@ -44,21 +44,21 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials authenticat
 		return false,err
 	}
 	encryptedCookie,err:=encryptAES(engine.aesKey,[]byte("loggedIn=true"))
-	if(err){
+	if err!=nil {
 		return false,err
 	}
-	cookie := http.Cookie{Name: engine.cookieName, Value:encryptedCookie, Expires: engine.cookieExpirationTime}
+	cookie := http.Cookie{Name: engine.cookieName, Value:string(encryptedCookie), Expires: engine.cookieExpirationTime}
 	http.SetCookie(cookie, &cookie)
 	return valid,nil
 }
 
-func (engine *AuthenticationEngine) ValidationMiddleware (notAuthenticatedRoute string) {
+func (engine *AuthenticationEngine) ValidationMiddleware(notAuthenticatedRoute string)  gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cookieString,err:=c.Request.Cookie(engine.cookieName)
 		if err!=nil{
 			c.Redirect(http.StatusForbidden,notAuthenticatedRoute)
 		}
-		value,err:=decryptAES(engine.aesKey,[]bytes(cookieString))
+		value,err:=decryptAES(engine.aesKey,[]byte(cookieString))
 	    if err!=nil || !bytes.Equal(value,[]byte("loggedIn=true")){
 			c.Redirect(http.StatusForbidden,notAuthenticatedRoute)
 		}else{
