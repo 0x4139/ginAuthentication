@@ -47,7 +47,7 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials authenticat
 	if(err){
 		return false,err
 	}
-	cookie := http.Cookie{Name: engine.cookieName, Value:encryptedCookie ), Expires: engine.cookieExpirationTime}
+	cookie := http.Cookie{Name: engine.cookieName, Value:encryptedCookie, Expires: engine.cookieExpirationTime}
 	http.SetCookie(cookie, &cookie)
 	return valid,nil
 }
