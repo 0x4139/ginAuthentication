@@ -30,7 +30,7 @@ func New(params AuthenticationEngine) (engine *AuthenticationEngine,err error)  
 	if len(params.AesKey) != 32 {
 		return nil,errors.New("aesKey must be 32bytes")
 	}
-	return &AuthenticationEngine{CookieName:params.CookieName, CheckCredentials:params.CheckCredentials},nil
+	return &params,nil
 }
 
 func (engine *AuthenticationEngine) Validate(credentials AuthenticationCredentials) (bool,error){
