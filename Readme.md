@@ -9,7 +9,7 @@ go get github.com/0x4139/ginAuthentication
 ```
 
 ### Tests
-No tests we're written :( sorry
+No tests were written :( sorry
 ```sh
 go 
 ```
