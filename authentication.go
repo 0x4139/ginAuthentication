@@ -48,7 +48,7 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials authenticat
 		return false,err
 	}
 	cookie := http.Cookie{Name: engine.cookieName, Value:string(encryptedCookie), Expires: engine.cookieExpirationTime}
-	http.SetCookie(cookie, &cookie)
+	http.SetCookie(c.Writer, &cookie)
 	return valid,nil
 }
 
@@ -58,7 +58,7 @@ func (engine *AuthenticationEngine) ValidationMiddleware(notAuthenticatedRoute s
 		if err!=nil{
 			c.Redirect(http.StatusForbidden,notAuthenticatedRoute)
 		}
-		value,err:=decryptAES(engine.aesKey,[]byte(cookieString))
+		value,err:=decryptAES(engine.aesKey,[]byte(cookieString.Value))
 	    if err!=nil || !bytes.Equal(value,[]byte("loggedIn=true")){
 			c.Redirect(http.StatusForbidden,notAuthenticatedRoute)
 		}else{
