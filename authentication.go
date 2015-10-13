@@ -57,10 +57,12 @@ func (engine *AuthenticationEngine) ValidationMiddleware(notAuthenticatedRoute s
 		cookieString,err:=c.Request.Cookie(engine.CookieName)
 		if err!=nil || cookieString==nil{
 			c.Redirect(http.StatusSeeOther, notAuthenticatedRoute)
+			c.Abort()
 		}else{
 			value,err:=decryptAES(engine.AesKey, []byte(cookieString.Value))
 			if err!=nil || !bytes.Equal(value,[]byte("loggedIn=true")){
 				c.Redirect(http.StatusSeeOther, notAuthenticatedRoute)
+				c.Abort()
 			}else{
 				c.Next()
 			}
