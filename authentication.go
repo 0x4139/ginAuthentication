@@ -83,11 +83,13 @@ func encryptAES(key, text []byte) ([]byte, error) {
 	}
 	cfb := cipher.NewCFBEncrypter(block, iv)
 	cfb.XORKeyStream(ciphertext[aes.BlockSize:], []byte(b))
-	return ciphertext, nil
+
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
 func decryptAES(key, text []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
+	text=base64.StdEncoding.DecodeString(string(text))
 	if err != nil {
 		return nil, err
 	}
