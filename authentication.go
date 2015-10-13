@@ -13,7 +13,7 @@ import (
 	"time"
 )
 
-type checkCredentials func(authenticationCredentials) (valid bool, err error)
+type checkCredentials func(AuthenticationCredentials) (valid bool, err error)
 
 type AuthenticationEngine struct {
 	aesKey []byte
@@ -21,7 +21,7 @@ type AuthenticationEngine struct {
 	fn checkCredentials
 	cookieExpirationTime time.Time
 }
-type authenticationCredentials struct{
+type AuthenticationCredentials struct{
 	username string
 	password string
 }
@@ -33,12 +33,12 @@ func New(params AuthenticationEngine) (engine *AuthenticationEngine,err error)  
 	return &AuthenticationEngine{cookieName:params.cookieName,fn:params.fn},nil
 }
 
-func (engine *AuthenticationEngine) Validate(credentials authenticationCredentials) (bool,error){
+func (engine *AuthenticationEngine) Validate(credentials AuthenticationCredentials) (bool,error){
 	valid,err:=engine.fn(credentials)
 	return valid,err
 }
 
-func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials authenticationCredentials,c *gin.Context) (bool,error){
+func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials AuthenticationCredentials,c *gin.Context) (bool,error){
 	valid,err:= engine.fn(credentials)
 	if err!=nil{
 		return false,err
