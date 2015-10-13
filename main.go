@@ -11,7 +11,7 @@ import (
 	"bytes"
 )
 
-type checkCredentials func(authenticationCredentials) (valid bool,err error)
+type checkCredentials func(authenticationCredentials) (valid bool, err error)
 
 type AuthenticationEngine struct {
 	aesKey []byte
@@ -19,13 +19,13 @@ type AuthenticationEngine struct {
 	fn checkCredentials
 	cookieExpirationTime int
 }
-type  authenticationCredentials struct{
+type authenticationCredentials struct{
 	username string
 	password string
 }
 
 func New(params AuthenticationEngine) (engine *AuthenticationEngine,err error)  {
-	if len(params.aesKey!=32){
+	if len(params.aesKey) != 32 {
 		return nil,errors.New("aesKey must be 32bytes")
 	}
 	if params.cookieName !=nil || params.fn!=nil{
