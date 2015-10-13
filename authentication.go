@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"crypto/cipher"
 	"bytes"
+	"time"
 )
 
 type checkCredentials func(authenticationCredentials) (valid bool, err error)
@@ -18,7 +19,7 @@ type AuthenticationEngine struct {
 	aesKey []byte
 	cookieName string
 	fn checkCredentials
-	cookieExpirationTime int
+	cookieExpirationTime time.Time
 }
 type authenticationCredentials struct{
 	username string
@@ -32,17 +33,21 @@ func New(params AuthenticationEngine) (engine *AuthenticationEngine,err error)  
 	return &AuthenticationEngine{cookieName:params.cookieName,fn:params.fn},nil
 }
 
-func (engine *AuthenticationEngine) Validate(credentials authenticationCredentials) bool{
-	valid,err:=checkCredentials(credentials)
+func (engine *AuthenticationEngine) Validate(credentials authenticationCredentials) (bool,error){
+	valid,err:=engine.fn(credentials)
 	return valid,err
 }
 
-func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials authenticationCredentials,c *gin.Context) bool{
-	valid,err:= checkCredentials(credentials)
+func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials authenticationCredentials,c *gin.Context) (bool,error){
+	valid,err:= engine.fn(credentials)
 	if err!=nil{
 		return false,err
 	}
-	cookie := http.Cookie{Name: engine.cookieName, Value: encryptAES([]byte(engine.aesKey),[]byte("loggedIn=true")), Expires: engine.cookieExpirationTime}
+	encryptedCookie,err:=encryptAES(engine.aesKey,[]byte("loggedIn=true"))
+	if(err){
+		return false,err
+	}
+	cookie := http.Cookie{Name: engine.cookieName, Value:encryptedCookie ), Expires: engine.cookieExpirationTime}
 	http.SetCookie(cookie, &cookie)
 	return valid,nil
 }
@@ -50,7 +55,11 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials authenticat
 func (engine *AuthenticationEngine) ValidationMiddleware (notAuthenticatedRoute string) {
 	return func(c *gin.Context) {
 		cookieString,err:=c.Request.Cookie(engine.cookieName)
-		if err!=nil || !bytes.Equal(decryptAES([]byte(engine.aesKey),[]bytes(cookieString)),[]byte("loggedIn=true")){
+		if err!=nil{
+			c.Redirect(http.StatusForbidden,notAuthenticatedRoute)
+		}
+		value,err:=decryptAES(engine.aesKey,[]bytes(cookieString))
+	    if err!=nil || !bytes.Equal(value,[]byte("loggedIn=true")){
 			c.Redirect(http.StatusForbidden,notAuthenticatedRoute)
 		}else{
 			c.Next()
