@@ -49,7 +49,7 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials authenticat
 func (engine *AuthenticationEngine) ValidationMiddleware (notAuthenticatedRoute string) {
 	return func(c *gin.Context) {
 		cookieString,err:=c.Request.Cookie(engine.cookieName)
-		if err!=nil || !bytes.Equal(decryptAES([]byte(engine.aesKey),cookieString),[]byte("loggedIn=true")){
+		if err!=nil || !bytes.Equal(decryptAES([]byte(engine.aesKey),[]bytes(cookieString)),[]byte("loggedIn=true")){
 			c.Redirect(http.StatusForbidden,notAuthenticatedRoute)
 		}else{
 			c.Next()
