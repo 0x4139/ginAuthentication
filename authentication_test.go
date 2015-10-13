@@ -6,10 +6,10 @@ import (
 
 func TestShouldCreateNewAuthEngine(t *testing.T) {
 	_,err:=New(AuthenticationEngine{
-		aesKey:[]byte("a very very very very secret key") /*32 bytes*/,
-		cookieExpirationTime:5*time.Hour,
-		cookieName:"gin-auth",
-		fn:func (authenticationCredentials) (valid bool,err error){
+		AesKey:[]byte("a very very very very secret key") /*32 bytes*/,
+		CookieExpirationTime:5*time.Hour,
+		CookieName:"gin-auth",
+		CheckCredentials:func (credentials AuthenticationCredentials) (valid bool,err error){
 			return true,nil//authenticate any user
 		}})
 
