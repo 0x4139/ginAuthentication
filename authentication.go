@@ -22,8 +22,8 @@ type AuthenticationEngine struct {
 	CookieExpirationTime time.Time
 }
 type AuthenticationCredentials struct{
-	username string
-	password string
+	Username string
+	Password string
 }
 
 func New(params AuthenticationEngine) (engine *AuthenticationEngine,err error)  {
