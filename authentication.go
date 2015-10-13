@@ -29,10 +29,7 @@ func New(params AuthenticationEngine) (engine *AuthenticationEngine,err error)  
 	if len(params.aesKey) != 32 {
 		return nil,errors.New("aesKey must be 32bytes")
 	}
-	if params.cookieName !=nil || params.fn!=nil{
-		return AuthenticationEngine{cookieName:params.cookieName,fn:params.fn},nil
-	}
-	return nil,errors.New("cookieName or the databaseFetchFunction cannot be empty")
+	return &AuthenticationEngine{cookieName:params.cookieName,fn:params.fn},nil
 }
 
 func (engine *AuthenticationEngine) Validate(credentials authenticationCredentials) bool{
