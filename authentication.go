@@ -47,7 +47,7 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials Authenticat
 	if err!=nil {
 		return false,err
 	}
-	cookie := http.Cookie{Name: engine.CookieName, Value:string(encryptedCookie), Expires: engine.CookieExpirationTime}
+	cookie := http.Cookie{Name: engine.CookieName, Value:encryptedCookie, Expires: engine.CookieExpirationTime}
 	http.SetCookie(c.Writer, &cookie)
 	return valid,nil
 }
@@ -59,7 +59,7 @@ func (engine *AuthenticationEngine) ValidationMiddleware(notAuthenticatedRoute s
 			c.Redirect(http.StatusSeeOther, notAuthenticatedRoute)
 			c.Abort()
 		}else{
-			value,err:=decryptAES(engine.AesKey, []byte(cookieString.Value))
+			value,err:=decryptAES(engine.AesKey, cookieString.Value)
 			if err!=nil || !bytes.Equal(value,[]byte("loggedIn=true")){
 				c.Redirect(http.StatusSeeOther, notAuthenticatedRoute)
 				c.Abort()
@@ -70,7 +70,7 @@ func (engine *AuthenticationEngine) ValidationMiddleware(notAuthenticatedRoute s
 	}
 }
 
-func encryptAES(key, text []byte) ([]byte, error) {
+func encryptAES(key, text []byte) (string, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -87,9 +87,12 @@ func encryptAES(key, text []byte) ([]byte, error) {
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-func decryptAES(key, text []byte) ([]byte, error) {
+func decryptAES(key []byte, input string) ([]byte, error) {
 	block, err := aes.NewCipher(key)
-	text=base64.StdEncoding.DecodeString(string(text))
+	if err != nil {
+		return nil, err
+	}
+	text,err:=base64.StdEncoding.DecodeString(input)
 	if err != nil {
 		return nil, err
 	}
