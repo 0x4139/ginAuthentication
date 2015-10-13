@@ -33,7 +33,8 @@ func New(params AuthenticationEngine) (engine *AuthenticationEngine,err error)  
 }
 
 func (engine *AuthenticationEngine) Validate(credentials authenticationCredentials) bool{
-	return checkCredentials(credentials)
+	valid,err:=checkCredentials(credentials)
+	return valid,err
 }
 
 func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials authenticationCredentials,c *gin.Context) bool{
