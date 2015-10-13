@@ -1,4 +1,5 @@
 package ginAuthentication
+
 import (
 	"errors"
 	"github.com/gin-gonic/gin"
@@ -43,7 +44,7 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials authenticat
 	if err!=nil{
 		return false,err
 	}
-	cookie := http.Cookie{Name: engine.cookieName, Value: encryptAES(engine.aesKey,"loggedIn=true"), Expires: engine.cookieExpirationTime}
+	cookie := http.Cookie{Name: engine.cookieName, Value: encryptAES([]byte(engine.aesKey),[]byte("loggedIn=true")), Expires: engine.cookieExpirationTime}
 	http.SetCookie(cookie, &cookie)
 	return valid,nil
 }
@@ -51,7 +52,7 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials authenticat
 func (engine *AuthenticationEngine) ValidationMiddleware (notAuthenticatedRoute string) {
 	return func(c *gin.Context) {
 		cookieString,err:=c.Request.Cookie(engine.cookieName)
-		if err!=nil || !bytes.Equal(decryptAES(engine.aesKey,cookieString),[]byte("loggedIn=true")){
+		if err!=nil || !bytes.Equal(decryptAES([]byte(engine.aesKey),cookieString),[]byte("loggedIn=true")){
 			c.Redirect(http.StatusForbidden,notAuthenticatedRoute)
 		}else{
 			c.Next()
