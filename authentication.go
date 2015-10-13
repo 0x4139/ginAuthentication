@@ -55,14 +55,15 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials Authenticat
 func (engine *AuthenticationEngine) ValidationMiddleware(notAuthenticatedRoute string)  gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cookieString,err:=c.Request.Cookie(engine.CookieName)
-		if err!=nil{
-			c.Redirect(http.StatusSeeOther, notAuthenticatedRoute)
-		}
-		value,err:=decryptAES(engine.AesKey, []byte(cookieString.Value))
-	    if err!=nil || !bytes.Equal(value,[]byte("loggedIn=true")){
+		if err!=nil || cookieString==nil{
 			c.Redirect(http.StatusSeeOther, notAuthenticatedRoute)
 		}else{
-			c.Next()
+			value,err:=decryptAES(engine.AesKey, []byte(cookieString.Value))
+			if err!=nil || !bytes.Equal(value,[]byte("loggedIn=true")){
+				c.Redirect(http.StatusSeeOther, notAuthenticatedRoute)
+			}else{
+				c.Next()
+			}
 		}
 	}
 }
