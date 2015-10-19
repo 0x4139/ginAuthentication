@@ -30,7 +30,7 @@ func New(params AuthenticationEngine) (engine *AuthenticationEngine,err error)  
 	if len(params.AesKey) != 32 {
 		return nil,errors.New("aesKey must be 32bytes")
 	}
-	return &AuthenticationEngine{CookieName:params.CookieName, CheckCredentials:params.CheckCredentials},nil
+	return &params,nil
 }
 
 func (engine *AuthenticationEngine) Validate(credentials AuthenticationCredentials) (bool,error){
@@ -47,7 +47,7 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials Authenticat
 	if err!=nil {
 		return false,err
 	}
-	cookie := http.Cookie{Name: engine.CookieName, Value:string(encryptedCookie), Expires: engine.CookieExpirationTime}
+	cookie := http.Cookie{Name: engine.CookieName, Value:encryptedCookie, Expires: engine.CookieExpirationTime}
 	http.SetCookie(c.Writer, &cookie)
 	return valid,nil
 }
@@ -55,36 +55,44 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials Authenticat
 func (engine *AuthenticationEngine) ValidationMiddleware(notAuthenticatedRoute string)  gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cookieString,err:=c.Request.Cookie(engine.CookieName)
-		if err!=nil{
+		if err!=nil || cookieString==nil{
 			c.Redirect(http.StatusSeeOther, notAuthenticatedRoute)
-		}
-		value,err:=decryptAES(engine.AesKey, []byte(cookieString.Value))
-	    if err!=nil || !bytes.Equal(value,[]byte("loggedIn=true")){
-			c.Redirect(http.StatusSeeOther, notAuthenticatedRoute)
+			c.Abort()
 		}else{
-			c.Next()
+			value,err:=decryptAES(engine.AesKey, cookieString.Value)
+			if err!=nil || !bytes.Equal(value,[]byte("loggedIn=true")){
+				c.Redirect(http.StatusSeeOther, notAuthenticatedRoute)
+				c.Abort()
+			}else{
+				c.Next()
+			}
 		}
 	}
 }
 
-func encryptAES(key, text []byte) ([]byte, error) {
+func encryptAES(key, text []byte) (string, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	b := base64.StdEncoding.EncodeToString(text)
 	ciphertext := make([]byte, aes.BlockSize+len(b))
 	iv := ciphertext[:aes.BlockSize]
 	if _, err := io.ReadFull(rand.Reader, iv); err != nil {
-		return nil, err
+		return "", err
 	}
 	cfb := cipher.NewCFBEncrypter(block, iv)
 	cfb.XORKeyStream(ciphertext[aes.BlockSize:], []byte(b))
-	return ciphertext, nil
+
+	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-func decryptAES(key, text []byte) ([]byte, error) {
+func decryptAES(key []byte, input string) ([]byte, error) {
 	block, err := aes.NewCipher(key)
+	if err != nil {
+		return nil, err
+	}
+	text,err:=base64.StdEncoding.DecodeString(input)
 	if err != nil {
 		return nil, err
 	}
