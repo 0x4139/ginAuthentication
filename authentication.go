@@ -55,6 +55,15 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials Authenticat
 	return valid, nil
 }
 
+func (engine *AuthenticationEngine) UnsetCookie(c *gin.Context) {
+	cookie := http.Cookie{
+		Name: engine.CookieName,
+		Value: "_",
+		MaxAge: -13,
+	}
+	http.SetCookie(c.Writer, &cookie)
+}
+
 func (engine *AuthenticationEngine) ValidationMiddleware(notAuthenticatedRoute string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		cookieString, err := c.Request.Cookie(engine.CookieName)
