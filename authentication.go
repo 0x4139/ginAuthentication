@@ -14,6 +14,7 @@ type AuthenticationEngine struct {
 	CookieName           string
 	CheckCredentials     checkCredentials
 	CookieExpirationTime time.Time
+	CookieMaxAge         int
 }
 
 type AuthenticationCredentials struct {
@@ -25,6 +26,11 @@ func New(params AuthenticationEngine) (engine *AuthenticationEngine, err error) 
 	if len(params.AesKey) != 32 {
 		return nil, errors.New("aesKey must be 32bytes")
 	}
+
+	if !params.CookieExpirationTime.IsZero() {
+		params.CookieMaxAge = int(params.CookieExpirationTime.Sub(time.Now()) / time.Second)
+	}
+
 	return &params, nil
 }
 
@@ -49,7 +55,7 @@ func (engine *AuthenticationEngine) ValidateAndSetCookie(credentials Authenticat
 	cookie := http.Cookie{
 		Name: engine.CookieName,
 		Value: encryptedCookie,
-		Expires: engine.CookieExpirationTime,
+		MaxAge: engine.CookieMaxAge,
 	}
 	http.SetCookie(c.Writer, &cookie)
 	return valid, nil
